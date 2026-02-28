@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Ajuste crucial del viewport: quita constraints restrictivos para permitir escalado natural -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Horario Académico</title>
+    
+    <!-- Configuración PWA Estricta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f1f5f9">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Soporte específico para iOS (Apple) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Horario">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23ffffff%22/><text y=%22.9em%22 x=%225%22 font-size=%2280%22>🗓️</text></svg>">
+    
+    <!-- Favicon Estándar -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗓️</text></svg>">
+    
+    <!-- Fuentes y Estilos -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* CSS Base */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Tabla Personalizada (Ajustada para máxima compactación) */
+        .schedule-table { 
+            border-collapse: separate; 
+            border-spacing: 2px;
+            table-layout: fixed; 
+            width: 100%; 
+        }
+        
+        .schedule-table th { 
+            background-color: #f8fafc; 
+            color: #334155; 
+            padding: 4px 2px;
+            font-size: 10px;
+            font-weight: 700; 
+            text-transform: uppercase; 
+            border-radius: 4px; 
+            border-bottom: 2px solid #e2e8f0; 
+            text-align: center; 
+            word-wrap: break-word;
+        }
+        
+        .schedule-table td { 
+            background-color: #ffffff; 
+            padding: 2px;
+            height: 45px;
+            border-radius: 4px; 
+            border: 1px solid #e2e8f0; 
+            vertical-align: middle; 
+            text-align: center; 
+            transition: all 0.2s ease; 
+            position: relative; 
+        }
+        
+        .schedule-table td.time-col { 
+            background-color: #f8fafc; 
+            border: none; 
+            text-align: right; 
+            padding-right: 4px; 
+            width: 50px;
+        }
+        
+        .time-col .block-num { font-weight: 800; color: #0f172a; font-size: 10px; line-height: 1; }
+        .time-col .block-time { font-weight: 500; color: #64748b; font-size: 8px; margin-top: 1px; line-height: 1; }
+
+        /* Celdas de Clases */
+        .class-cell { 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100%; 
+            width: 100%; 
+            border-radius: 4px; 
+            padding: 2px; 
+            font-weight: 700; 
+            font-size: 9px;
+            line-height: 1; 
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); 
+            transition: transform 0.2s ease, box-shadow 0.2s ease; 
+            user-select: none; 
+            overflow: hidden; 
+            word-wrap: break-word; 
+        }
+        
+        /* Colores */
+        .c-orange { background-color: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+        .c-blue   { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .c-green  { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .c-purple { background-color: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+        .c-red    { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+        .c-yellow { background-color: #fefce8; color: #a16207; border: 1px solid #fef08a; }
+        .c-gray   { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+        
+        .c-break { background-color: #f8fafc; color: #475569; font-weight: 600; font-size: 10px; letter-spacing: 0; border: 1px dashed #cbd5e1 !important; }
+
+        /* Modo Edición */
+        body.edit-mode .schedule-table td.droppable { cursor: pointer; }
+        body.edit-mode .schedule-table td.droppable:hover { background-color: #f1f5f9; border: 2px dashed #94a3b8; }
+        body.edit-mode .class-cell { cursor: grab; }
+        body.edit-mode .class-cell:active { cursor: grabbing; transform: scale(0.95); }
+        .drag-over { background-color: #e0f2fe !important; border: 2px dashed #3b82f6 !important; }
+
+        /* Contenedor Principal Ajustado */
+        .table-container { width: 100%; }
+        .modal-overlay { backdrop-filter: blur(4px); transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-2 px-1 md:py-4 md:px-6">
+
+    <div class="w-full max-w-5xl flex flex-col md:flex-row justify-between items-center mb-2 md:mb-4 gap-2">
+        <div class="flex items-center gap-2 md:gap-4">
+            <h1 class="text-xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Mi <span class="text-orange-500">Horario</span></h1>
+            
+            <div id="syncStatus" class="text-xs md:text-sm font-semibold bg-white border border-slate-200 px-2 py-1 md:px-3 md:py-1.5 rounded-full shadow-sm flex items-center gap-1 md:gap-2 text-green-600">
+                <i class="fa-solid fa-mobile-screen"></i> <span class="hidden sm:inline">Guardado Local</span>
+            </div>
+        </div>
+        
+        <button id="toggleEditBtn" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-base rounded-lg font-semibold shadow-md transition-all flex items-center gap-1 md:gap-2 transform hover:-translate-y-0.5">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Editar</span>
+        </button>
+    </div>
+
+    <div class="w-full max-w-5xl bg-white rounded-xl shadow-lg p-1.5 md:p-5 border border-slate-100 flex flex-col">
+        <div id="editNotice" class="hidden mb-2 bg-blue-50 border border-blue-200 text-blue-700 px-2 py-1.5 rounded-md flex items-center gap-2 text-[10px] md:text-sm font-medium">
+            <i class="fa-solid fa-circle-info text-blue-500"></i>
+            Modo de edición activo. Los cambios se guardarán localmente.
+        </div>
+
+        <div class="table-container">
+            <table class="schedule-table" id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th class="time-col">Hora</th><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Editar -->
+    <div id="editModal" class="modal-overlay fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center opacity-0 pointer-events-none px-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 transform scale-95 transition-transform duration-300" id="modalContent">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-lg font-bold text-slate-900">Configurar Clase</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <input type="hidden" id="cellKey">
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-slate-700 mb-1.5">Nombre de la Asignatura</label>
+                <input type="text" id="subjectName" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium text-slate-800">
+            </div>
+            <div class="mb-5">
+                <label class="block text-sm font-bold text-slate-700 mb-1.5">Color</label>
+                <div class="flex flex-wrap gap-2" id="colorPicker"></div>
+            </div>
+            <div class="flex gap-2 justify-end mt-6">
+                <button id="btnDelete" class="hidden px-4 py-2 text-sm rounded-lg font-semibold text-red-600 bg-red-50 hover:bg-red-100 mr-auto"><i class="fa-solid fa-trash mr-1"></i> Borrar</button>
+                <button onclick="closeModal()" class="px-4 py-2 text-sm rounded-lg font-semibold text-slate-600 hover:bg-slate-100">Cancelar</button>
+                <button onclick="saveCell()" class="px-4 py-2 text-sm rounded-lg font-semibold text-white bg-orange-500 hover:bg-orange-600">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Registrar Service Worker para funcionamiento Offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registrado', reg))
+                    .catch(err => console.log('Error en Service Worker', err));
+            });
+        }
+
+        // Datos y Configuración
+        const timeBlocks = [
+            { id: 'b1', name: 'B1-2', time: '08:15 - 09:25' }, { id: 'b2', name: 'B3-4', time: '09:40 - 10:50' },
+            { id: 'b3', name: 'B5-6', time: '11:05 - 12:15' }, { id: 'b4', name: 'B7-8', time: '12:30 - 13:40' },
+            { id: 'receso', name: 'Receso', time: '13:40 - 14:40', isBreak: true }, { id: 'b5', name: 'B9-10', time: '14:40 - 15:50' },
+            { id: 'b6', name: 'B11-12', time: '16:05 - 17:15' }, { id: 'b7', name: 'B13-14', time: '17:30 - 18:40' }
+        ];
+        // Nombres de columnas abreviados para ahorrar espacio
+        const days = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'];
+        const colors = [
+            { id: 'c-orange', bg: '#fff7ed', border: '#fed7aa' }, { id: 'c-blue', bg: '#eff6ff', border: '#bfdbfe' },
+            { id: 'c-green', bg: '#ecfdf5', border: '#a7f3d0' }, { id: 'c-purple', bg: '#f5f3ff', border: '#ddd6fe' },
+            { id: 'c-red', bg: '#fef2f2', border: '#fecaca' }, { id: 'c-yellow', bg: '#fefce8', border: '#fef08a' },
+            { id: 'c-gray', bg: '#f1f5f9', border: '#cbd5e1' }
+        ];
+
+        let scheduleData = {};
+        let isEditMode = false; let selectedColor = 'c-orange'; let draggedCellKey = null;
+
+        // Cargar datos locales
+        function loadLocalData() {
+            const savedData = localStorage.getItem('mi_horario_offline');
+            if (savedData) {
+                scheduleData = JSON.parse(savedData);
+            } else {
+                // Estado inicial BLANCO. Solo se define el objeto vacío.
+                scheduleData = {};
+            }
+            renderTable();
+        }
+
+        // Guardar datos locales
+        function saveLocalData() {
+            localStorage.setItem('mi_horario_offline', JSON.stringify(scheduleData));
+            const status = document.getElementById('syncStatus');
+            status.innerHTML = '<i class="fa-solid fa-check-double"></i> <span class="hidden sm:inline">Actualizado</span>';
+            setTimeout(() => status.innerHTML = '<i class="fa-solid fa-mobile-screen"></i> <span class="hidden sm:inline">Guardado Local</span>', 2000);
+        }
+
+        // Renderizado
+        function renderTable() {
+            const tbody = document.getElementById('scheduleBody'); tbody.innerHTML = '';
+            timeBlocks.forEach(block => {
+                const tr = document.createElement('tr');
+                const tdTime = document.createElement('td'); tdTime.className = 'time-col';
+                tdTime.innerHTML = `<div class="block-num">${block.name}</div><div class="block-time">${block.time}</div>`;
+                tr.appendChild(tdTime);
+
+                if (block.isBreak) {
+                    const tdBreak = document.createElement('td'); tdBreak.colSpan = 5; tdBreak.className = 'c-break';
+                    tdBreak.innerHTML = '<i class="fa-solid fa-utensils"></i> <span class="hidden sm:inline">Almuerzo Libre</span>';
+                    tr.appendChild(tdBreak);
+                } else {
+                    days.forEach(day => {
+                        const cellKey = `${day}-${block.id}`; const td = document.createElement('td');
+                        td.className = 'droppable'; td.dataset.key = cellKey;
+                        td.onclick = () => window.handleCellClick(cellKey);
+                        td.ondragover = (e) => window.handleDragOver(e, td);
+                        td.ondragleave = () => window.handleDragLeave(td);
+                        td.ondrop = (e) => window.handleDrop(e, cellKey);
+                        const cellData = scheduleData[cellKey];
+                        if (cellData) {
+                            td.innerHTML = `<div class="class-cell ${cellData.color}" draggable="${isEditMode}" ondragstart="window.handleDragStart(event, '${cellKey}')" ondragend="window.handleDragEnd(event)"><span class="text-center">${cellData.title}</span></div>`;
+                            td.style.border = 'none'; td.style.padding = '0';
+                        }
+                        tr.appendChild(td);
+                    });
+                }
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Eventos
+        document.getElementById('toggleEditBtn').addEventListener('click', () => {
+            isEditMode = !isEditMode;
+            document.body.classList.toggle('edit-mode', isEditMode);
+            const btn = document.getElementById('toggleEditBtn');
+            if (isEditMode) {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i><span>Terminar</span>';
+                btn.classList.replace('bg-slate-900', 'bg-green-600'); btn.classList.replace('hover:bg-slate-800', 'hover:bg-green-700');
+                document.getElementById('editNotice').classList.remove('hidden');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i><span>Editar</span>';
+                btn.classList.replace('bg-green-600', 'bg-slate-900'); btn.classList.replace('hover:bg-green-700', 'hover:bg-slate-800');
+                document.getElementById('editNotice').classList.add('hidden');
+            }
+            renderTable(); 
+        });
+
+        // Funciones Drag & Drop
+        window.handleDragStart = function(e, key) { if (!isEditMode) return; draggedCellKey = key; e.dataTransfer.effectAllowed = 'move'; e.target.style.opacity = '0.5'; setTimeout(() => e.target.classList.add('invisible'), 0); };
+        window.handleDragEnd = function(e) { e.target.style.opacity = '1'; e.target.classList.remove('invisible'); draggedCellKey = null; };
+        window.handleDragOver = function(e, td) { if (!isEditMode || !draggedCellKey) return; e.preventDefault(); td.classList.add('drag-over'); };
+        window.handleDragLeave = function(td) { td.classList.remove('drag-over'); };
+        window.handleDrop = function(e, destKey) {
+            if (!isEditMode || !draggedCellKey) return; e.preventDefault(); document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            if (draggedCellKey !== destKey) {
+                const draggedData = scheduleData[draggedCellKey]; const destData = scheduleData[destKey];
+                if (destData) { scheduleData[destKey] = draggedData; scheduleData[draggedCellKey] = destData; } else { scheduleData[destKey] = draggedData; delete scheduleData[draggedCellKey]; }
+                renderTable(); saveLocalData();
+            }
+        };
+
+        // Modal y Colores
+        function initColorPicker() {
+            const container = document.getElementById('colorPicker'); container.innerHTML = '';
+            colors.forEach(c => {
+                const btn = document.createElement('button'); btn.className = `w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 flex items-center justify-center`;
+                btn.style.backgroundColor = c.bg; btn.style.borderColor = c.border; btn.onclick = () => window.selectColor(c.id);
+                btn.innerHTML = `<i class="fa-solid fa-check text-slate-700 text-xs opacity-0 pointer-events-none" id="check-${c.id}"></i>`;
+                container.appendChild(btn);
+            });
+        }
+        window.selectColor = function(colorId) {
+            selectedColor = colorId; colors.forEach(c => document.getElementById(`check-${c.id}`).classList.replace('opacity-100', 'opacity-0'));
+            document.getElementById(`check-${colorId}`).classList.replace('opacity-0', 'opacity-100');
+        };
+        window.handleCellClick = function(key) {
+            if (!isEditMode) return;
+            const cellData = scheduleData[key]; const modal = document.getElementById('editModal'); const inputName = document.getElementById('subjectName'); const btnDelete = document.getElementById('btnDelete');
+            document.getElementById('cellKey').value = key;
+            if (cellData) { document.getElementById('modalTitle').innerText = 'Editar Asignatura'; inputName.value = cellData.title; window.selectColor(cellData.color); btnDelete.classList.remove('hidden'); btnDelete.onclick = () => window.deleteCell(key); } 
+            else { document.getElementById('modalTitle').innerText = 'Añadir Asignatura'; inputName.value = ''; window.selectColor('c-orange'); btnDelete.classList.add('hidden'); }
+            modal.classList.remove('opacity-0', 'pointer-events-none'); document.getElementById('modalContent').classList.replace('scale-95', 'scale-100'); inputName.focus();
+        };
+        window.closeModal = function() { document.getElementById('editModal').classList.add('opacity-0', 'pointer-events-none'); document.getElementById('modalContent').classList.replace('scale-100', 'scale-95'); };
+        window.saveCell = function() {
+            const key = document.getElementById('cellKey').value; const title = document.getElementById('subjectName').value.trim();
+            if (title !== '') { scheduleData[key] = { title: title, color: selectedColor }; renderTable(); saveLocalData(); window.closeModal(); }
+        };
+        window.deleteCell = function(key) { delete scheduleData[key]; renderTable(); saveLocalData(); window.closeModal(); };
+
+        // Iniciar
+        initColorPicker();
+        loadLocalData();
+
+    </script>
+</body>
+</html>
