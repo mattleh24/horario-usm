@@ -2,25 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Ajuste crucial del viewport: quita constraints restrictivos para permitir escalado natural -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Horario Académico</title>
+    <title>Mi Horario Acad茅mico</title>
     
-    <!-- Configuración PWA Estricta -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f1f5f9">
     <meta name="mobile-web-app-capable" content="yes">
     
-    <!-- Soporte específico para iOS (Apple) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Horario">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23ffffff%22/><text y=%22.9em%22 x=%225%22 font-size=%2280%22>🗓️</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23ffffff%22/><text y=%22.9em%22 x=%225%22 font-size=%2280%22>馃搮</text></svg>">
     
-    <!-- Favicon Estándar -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗓️</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>馃搮</text></svg>">
     
-    <!-- Fuentes y Estilos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -36,7 +31,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Tabla Personalizada (Ajustada para máxima compactación) */
+        /* Tabla Personalizada (Ajustada para m谩xima compactaci贸n) */
         .schedule-table { 
             border-collapse: separate; 
             border-spacing: 2px;
@@ -111,7 +106,7 @@
         
         .c-break { background-color: #f8fafc; color: #475569; font-weight: 600; font-size: 10px; letter-spacing: 0; border: 1px dashed #cbd5e1 !important; }
 
-        /* Modo Edición */
+        /* Modo Edici贸n */
         body.edit-mode .schedule-table td.droppable { cursor: pointer; }
         body.edit-mode .schedule-table td.droppable:hover { background-color: #f1f5f9; border: 2px dashed #94a3b8; }
         body.edit-mode .class-cell { cursor: grab; }
@@ -143,14 +138,14 @@
     <div class="w-full max-w-5xl bg-white rounded-xl shadow-lg p-1.5 md:p-5 border border-slate-100 flex flex-col">
         <div id="editNotice" class="hidden mb-2 bg-blue-50 border border-blue-200 text-blue-700 px-2 py-1.5 rounded-md flex items-center gap-2 text-[10px] md:text-sm font-medium">
             <i class="fa-solid fa-circle-info text-blue-500"></i>
-            Modo de edición activo. Los cambios se guardarán localmente.
+            Modo de edici贸n activo. Los cambios se guardar谩n localmente.
         </div>
 
         <div class="table-container">
             <table class="schedule-table" id="scheduleTable">
                 <thead>
                     <tr>
-                        <th class="time-col">Hora</th><th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th>
+                        <th class="time-col">Hora</th><th>Lun</th><th>Mar</th><th>Mi茅</th><th>Jue</th><th>Vie</th>
                     </tr>
                 </thead>
                 <tbody id="scheduleBody"></tbody>
@@ -158,7 +153,6 @@
         </div>
     </div>
 
-    <!-- Modal Editar -->
     <div id="editModal" class="modal-overlay fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center opacity-0 pointer-events-none px-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-5 transform scale-95 transition-transform duration-300" id="modalContent">
             <div class="flex justify-between items-center mb-4">
@@ -192,7 +186,7 @@
             });
         }
 
-        // Datos y Configuración
+        // Datos y Configuraci贸n
         const timeBlocks = [
             { id: 'b1', name: 'B1-2', time: '08:15 - 09:25' }, { id: 'b2', name: 'B3-4', time: '09:40 - 10:50' },
             { id: 'b3', name: 'B5-6', time: '11:05 - 12:15' }, { id: 'b4', name: 'B7-8', time: '12:30 - 13:40' },
@@ -217,7 +211,7 @@
             if (savedData) {
                 scheduleData = JSON.parse(savedData);
             } else {
-                // Estado inicial BLANCO. Solo se define el objeto vacío.
+                // Estado inicial BLANCO. Solo se define el objeto vac铆o.
                 scheduleData = {};
             }
             renderTable();
@@ -314,7 +308,7 @@
             const cellData = scheduleData[key]; const modal = document.getElementById('editModal'); const inputName = document.getElementById('subjectName'); const btnDelete = document.getElementById('btnDelete');
             document.getElementById('cellKey').value = key;
             if (cellData) { document.getElementById('modalTitle').innerText = 'Editar Asignatura'; inputName.value = cellData.title; window.selectColor(cellData.color); btnDelete.classList.remove('hidden'); btnDelete.onclick = () => window.deleteCell(key); } 
-            else { document.getElementById('modalTitle').innerText = 'Añadir Asignatura'; inputName.value = ''; window.selectColor('c-orange'); btnDelete.classList.add('hidden'); }
+            else { document.getElementById('modalTitle').innerText = 'A帽adir Asignatura'; inputName.value = ''; window.selectColor('c-orange'); btnDelete.classList.add('hidden'); }
             modal.classList.remove('opacity-0', 'pointer-events-none'); document.getElementById('modalContent').classList.replace('scale-95', 'scale-100'); inputName.focus();
         };
         window.closeModal = function() { document.getElementById('editModal').classList.add('opacity-0', 'pointer-events-none'); document.getElementById('modalContent').classList.replace('scale-100', 'scale-95'); };
